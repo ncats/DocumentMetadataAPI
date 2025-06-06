@@ -82,6 +82,6 @@ jobs:
         with:
           command: monitor
           image: $DOCKER_REGISTRY/$IMAGE_NAME:$BUILD_VERSION
-          args: "--file=deploy-ncats/Dockerfile" 
+          args: "--file=Dockerfile" 
 
   
