@@ -4,7 +4,7 @@ name: snyk-zap
 # Define variables
 env:
   DOCKER_REGISTRY: 853771734544.dkr.ecr.us-east-1.amazonaws.com
-  IMAGE_NAME: DocumentMetadataAPI
+  IMAGE_NAME: documentmetadataapi
 
 # Define when the workflow should be triggered (on push to a specific branch and pull requests to the master branch)
 on:
@@ -76,7 +76,7 @@ jobs:
       - name: Run Snyk to check Docker image for vulnerabilities 
         continue-on-error: true
         uses: snyk/actions/docker@master
-        id: documentMetadataApi
+        id: documentmetadataapi
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_CLI }}
         with:
