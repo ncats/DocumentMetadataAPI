@@ -30,7 +30,7 @@ opentelemetry-sdk==1.16.0
 opentelemetry-semantic-conventions==0.37b0
 opentelemetry-util-http==0.37b0
 packaging==23.1
-protobuf==4.24.3
+protobuf==5.29.6
 pymongo==4.3.2
 python-dateutil==2.8.2
 python-lorem==1.1.2
