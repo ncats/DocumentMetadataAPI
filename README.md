@@ -67,3 +67,61 @@ GET /publications?pubids=PMID:30690000,PMID:82374,PMID:28736,PMID:8000234&reques
 }
 
 ```
+
+## Updating the database
+
+The database is populated from tab-separated (TSV) files where each row is one publication. The columns must appear in this order (minimum 10):
+
+```
+document_id  pub_year  pub_month  pub_day  journal_name  journal_abbrev  volume  issue  article_title  abstract
+```
+
+- `document_id` should be prefixed (`PMID:30690000`). Use `-` for an absent `pub_day`.
+- Each PMID record is automatically duplicated under its PMC and DOI synonyms (fetched from the NCBI ID converter API), so you only need to supply PMID-keyed rows.
+
+### Loading locally
+
+`data_loader.py` has no CLI entry point, so loading is done via a short Python script:
+
+```python
+from pymongo import MongoClient
+import data_loader
+
+client = MongoClient("mongodb://...")   # or omit arg for localhost
+db = client['test']
+data_loader.collection = db['documentMetadata']
+data_loader.reference  = db['documentIds']
+
+data_loader.process_file('/path/to/data.tsv')
+```
+
+To delete records instead of upsert, pass a plain text file with one `document_id` per line and call `process_file('/path/to/deletes.txt', is_delete=True)`.
+
+### Via AWS Lambda (`data_loader.lambda_handler`)
+
+The Lambda variant downloads a gzipped TSV from a GCS bucket and then upserts (or, if "deleted" appears in the filename, deletes). It expects this event payload:
+
+```json
+{
+  "source": {
+    "bucket": "my-gcs-bucket",
+    "filepath": "path/to/data.tsv.gz",
+    "hmac_key_id": "...",
+    "hmac_secret": "..."
+  }
+}
+```
+
+It connects to MongoDB via the `connection_string` environment variable (required).
+
+> **Note:** There is a known bug in the current source — `lambda_handler` passes `source_info['bucket']` and `source_info['filepath']` to `process_file` instead of the local path returned by `get_file`. The Lambda may not be functional without fixing this first.
+
+### Comparison
+
+| | Local script | Lambda |
+|---|---|---|
+| Data source | Local TSV file | Gzipped TSV from GCS |
+| MongoDB auth | Any connection string you supply | `connection_string` env var on the Lambda |
+| Synonyms | Fetched from NCBI API | Fetched from NCBI API |
+| Delete support | `is_delete=True` | Filename must contain `"deleted"` |
+| Known issues | None | Bug passing wrong path to `process_file` |
